@@ -5,11 +5,19 @@ from wordpot import app, pm
 from wordpot.helpers import *
 from wordpot.logger import LOGGER
 
+import psycopg2
+import datetime
+
 TEMPLATE = app.config['THEME'] + '.html'
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/<filename>.<ext>', methods=['GET', 'POST'])
 def commons(filename=None, ext=None):
+
+    if app.config['POSTGRESQL_ENABLED']:
+        cursor = app.config['postgresql_dbh'].cursor()
+        cursor.execute("INSERT INTO connections (source_ip, source_port, dest_host, dest_port, user_agent, url, method, path, headers, timestamp) VALUES ('%s',%s,'%s',%s,'%s','%s','%s','%s','%s','%s')" % (request.remote_addr, request.environ['REMOTE_PORT'], request.environ['SERVER_NAME'], request.environ['SERVER_PORT'], request.user_agent.string, request.url, request.method, request.path, str(request.headers), str(datetime.datetime.now())))
+        app.config['postgresql_dbh'].commit()
 
     # Plugins hook
     for p in pm.hook('commons'):
@@ -18,6 +26,13 @@ def commons(filename=None, ext=None):
             LOGGER.info(p.outputs['log'])
         if 'log_json' in p.outputs and app.config['HPFEEDS_ENABLED']:
             app.config['hpfeeds_client'].publish(app.config['HPFEEDS_TOPIC'], p.outputs['log_json'])
+        if 'log_postgresql' in p.outputs and app.config['POSTGRESQL_ENABLED']:
+            try:
+                cursor = app.config['postgresql_dbh'].cursor()
+                cursor.execute(p.outputs['log_postgresql'])
+                app.config['postgresql_dbh'].commit()
+            except Exception as e:
+                print(e)
         if 'template' in p.outputs:
             if 'template_vars' in p.outputs:
                 return render_template(p.outputs['template'], vars=p.outputs['template_vars'])
@@ -37,6 +52,11 @@ def admin(subpath='/'):
     origin = request.remote_addr
     LOGGER.info('%s probed for the admin panel with path: %s', origin, subpath)
     
+    if app.config['POSTGRESQL_ENABLED']:
+        cursor = app.config['postgresql_dbh'].cursor()
+        cursor.execute("INSERT INTO connections (source_ip, source_port, dest_host, dest_port, user_agent, url, method, path, headers, timestamp) VALUES ('%s',%s,'%s',%s,'%s','%s','%s','%s','%s','%s')" % (request.remote_addr, request.environ['REMOTE_PORT'], request.environ['SERVER_NAME'], request.environ['SERVER_PORT'], request.user_agent.string, request.url, request.method, request.path, str(request.headers), str(datetime.datetime.now())))
+        app.config['postgresql_dbh'].commit()
+
     # Plugins hook
     for p in pm.hook('plugins'):
         p.start(subpath=subpath, request=request)
@@ -44,6 +64,13 @@ def admin(subpath='/'):
             LOGGER.info(p.outputs['log'])
         if 'log_json' in p.outputs and app.config['HPFEEDS_ENABLED']:
             app.config['hpfeeds_client'].publish(app.config['HPFEEDS_TOPIC'], p.outputs['log_json'])
+        if 'log_postgresql' in p.outputs and app.config['POSTGRESQL_ENABLED']:
+            try:
+                cursor = app.config['postgresql_dbh'].cursor()
+                cursor.execute(p.outputs['log_postgresql'])
+                app.config['postgresql_dbh'].commit()
+            except Exception as e:
+                print(e)
         if 'template' in p.outputs:
             if 'template_vars' in p.outputs:
                 return render_template(p.outputs['template'], vars=p.outputs['template_vars'])
@@ -58,6 +85,11 @@ def plugin(plugin, subpath='/'):
     origin = request.remote_addr
     LOGGER.info('%s probed for plugin "%s" with path: %s', origin, plugin, subpath)
     
+    if app.config['POSTGRESQL_ENABLED']:
+        cursor = app.config['postgresql_dbh'].cursor()
+        cursor.execute("INSERT INTO connections (source_ip, source_port, dest_host, dest_port, user_agent, url, method, path, headers, timestamp) VALUES ('%s',%s,'%s',%s,'%s','%s','%s','%s','%s','%s')" % (request.remote_addr, request.environ['REMOTE_PORT'], request.environ['SERVER_NAME'], request.environ['SERVER_PORT'], request.user_agent.string, request.url, request.method, request.path, str(request.headers), str(datetime.datetime.now())))
+        app.config['postgresql_dbh'].commit()
+
     # Is the plugin in the whitelist?
     if not is_plugin_whitelisted(plugin):
         abort(404)
@@ -69,6 +101,13 @@ def plugin(plugin, subpath='/'):
             LOGGER.info(p.outputs['log'])
         if 'log_json' in p.outputs and app.config['HPFEEDS_ENABLED']:
             app.config['hpfeeds_client'].publish(app.config['HPFEEDS_TOPIC'], p.outputs['log_json'])
+        if 'log_postgresql' in p.outputs and app.config['POSTGRESQL_ENABLED']:
+            try:
+                cursor = app.config['postgresql_dbh'].cursor()
+                cursor.execute(p.outputs['log_postgresql'])
+                app.config['postgresql_dbh'].commit()
+            except Exception as e:
+                print(e)
         if 'template' in p.outputs:
             if 'template_vars' in p.outputs:
                 return render_template(p.outputs['template'], vars=p.outputs['template_vars'])
@@ -83,6 +122,11 @@ def theme(theme, subpath='/'):
     origin = request.remote_addr
     LOGGER.info('%s probed for theme "%s" with path: %s', origin, theme, subpath)
 
+    if app.config['POSTGRESQL_ENABLED']:
+        cursor = app.config['postgresql_dbh'].cursor()
+        cursor.execute("INSERT INTO connections (source_ip, source_port, dest_host, dest_port, user_agent, url, method, path, headers, timestamp) VALUES ('%s',%s,'%s',%s,'%s','%s','%s','%s','%s','%s')" % (request.remote_addr, request.environ['REMOTE_PORT'], request.environ['SERVER_NAME'], request.environ['SERVER_PORT'], request.user_agent.string, request.url, request.method, request.path, str(request.headers), str(datetime.datetime.now())))
+        app.config['postgresql_dbh'].commit()
+
     # Is the theme whitelisted?
     if not is_theme_whitelisted(theme):
         abort(404)
@@ -94,10 +138,27 @@ def theme(theme, subpath='/'):
             LOGGER.info(p.outputs['log'])
         if 'log_json' in p.outputs and app.config['HPFEEDS_ENABLED']:
             app.config['hpfeeds_client'].publish(app.config['HPFEEDS_TOPIC'], p.outputs['log_json'])
+        if 'log_postgresql' in p.outputs and app.config['POSTGRESQL_ENABLED']:
+            try:
+                cursor = app.config['postgresql_dbh'].cursor()
+                cursor.execute(p.outputs['log_postgresql'])
+                app.config['postgresql_dbh'].commit()
+            except Exception as e:
+                print(e)
         if 'template' in p.outputs:
             if 'template_vars' in p.outputs:
                 return render_template(p.outputs['template'], vars=p.outputs['template_vars'])
             return render_template(p.outputs['template'], vars={})
 
     return render_template(TEMPLATE, vars={}) 
+
+@app.route('/<path:path>', methods=['GET', 'POST'])
+def connection(path='/'):
+
+    if app.config['POSTGRESQL_ENABLED']:
+        cursor = app.config['postgresql_dbh'].cursor()
+        cursor.execute("INSERT INTO connections (source_ip, source_port, dest_host, dest_port, user_agent, url, method, path, headers, timestamp) VALUES ('%s',%s,'%s',%s,'%s','%s','%s','%s','%s','%s')" % (request.remote_addr, request.environ['REMOTE_PORT'], request.environ['SERVER_NAME'], request.environ['SERVER_PORT'], request.user_agent.string, request.url, request.method, request.path, str(request.headers), str(datetime.datetime.now())))
+        app.config['postgresql_dbh'].commit()
+
+    abort(404)
 

@@ -98,6 +98,109 @@ if app.config['HPFEEDS_ENABLED']:
 else:
     LOGGER.warn('hpfeeds is disabled')
 
+if app.config['POSTGRESQL_ENABLED']:
+    import psycopg2
+    print 'Connecting to postgresql {}:{}'.format(app.config['POSTGRESQL_HOST'], app.config['POSTGRESQL_PORT'])
+    app.config['postgresql_dbh'] = psycopg2.connect(database=app.config['POSTGRESQL_DATABASE'], user=app.config['POSTGRESQL_USER'], password=app.config['POSTGRESQL_PASSWORD'], host=app.config['POSTGRESQL_HOST'], port=app.config['POSTGRESQL_PORT'])
+    cursor = app.config['postgresql_dbh'].cursor()
+    cursor.execute("""CREATE TABLE IF NOT EXISTS 
+			login_attempts	(
+				id SERIAL PRIMARY KEY,
+				plugin TEXT, 
+				source_ip TEXT, 
+				source_port INTEGER,
+				dest_host TEXT,  
+				dest_port INTEGER, 
+				username TEXT, 
+				password TEXT, 
+				user_agent TEXT, 
+				url TEXT,
+				timestamp TIMESTAMP
+    );""")
+    cursor.execute("""CREATE TABLE IF NOT EXISTS 
+			login_page_probes	(
+				id SERIAL PRIMARY KEY,
+				plugin TEXT, 
+				source_ip TEXT, 
+				source_port INTEGER,
+				dest_host TEXT,  
+				dest_port INTEGER, 
+				user_agent TEXT, 
+				url TEXT,
+				timestamp TIMESTAMP
+    );""")
+    cursor.execute("""CREATE TABLE IF NOT EXISTS 
+			file_probes	(
+				id SERIAL PRIMARY KEY,
+				plugin TEXT,
+				source_ip TEXT, 
+				source_port INTEGER,
+				dest_host TEXT,  
+				dest_port INTEGER, 
+				probed_filename TEXT,  
+				user_agent TEXT, 
+				url TEXT,
+				timestamp TIMESTAMP
+    );""")
+    cursor.execute("""CREATE TABLE IF NOT EXISTS 
+			plugins_probes	(
+				id SERIAL PRIMARY KEY,
+				plugin TEXT,
+				source_ip TEXT, 
+				source_port INTEGER,
+				dest_host TEXT,  
+				dest_port INTEGER, 
+				probed_plugin TEXT,  
+				path TEXT,
+				user_agent TEXT, 
+				url TEXT,
+				timestamp TIMESTAMP
+    );""")
+    cursor.execute("""CREATE TABLE IF NOT EXISTS 
+			themes_probes	(
+				id SERIAL PRIMARY KEY,
+				plugin TEXT,
+				source_ip TEXT, 
+				source_port INTEGER,
+				dest_host TEXT,  
+				dest_port INTEGER, 
+				probed_theme TEXT, 
+				path TEXT, 
+				user_agent TEXT, 
+				url TEXT,
+				timestamp TIMESTAMP
+    );""")
+    cursor.execute("""CREATE TABLE IF NOT EXISTS 
+			author_probes	(
+				id SERIAL PRIMARY KEY,
+				plugin TEXT,
+				source_ip TEXT, 
+				source_port INTEGER,
+				dest_host TEXT,  
+				dest_port INTEGER, 
+				probed_author TEXT,  
+				user_agent TEXT, 
+				url TEXT,
+				timestamp TIMESTAMP
+    );""")
+    cursor.execute("""CREATE TABLE IF NOT EXISTS 
+			connections	(
+				id SERIAL PRIMARY KEY,
+				source_ip TEXT, 
+				source_port INTEGER,
+				dest_host TEXT,  
+				dest_port INTEGER, 
+				user_agent TEXT, 
+				url TEXT,
+				method TEXT,
+				path TEXT,
+				headers TEXT,
+				timestamp TIMESTAMP
+    );""")
+    app.config['postgresql_dbh'].commit()
+else:
+    LOGGER.warn('postgresql is disabled')
+
 
 # ------------------------
 # Add Custom Server Header
