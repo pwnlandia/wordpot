@@ -14,6 +14,7 @@ Wordpot is a Wordpress honeypot which detects probes for plugins, themes, timthu
       --plugins=PLUGINS Fake installed plugins
       --themes=THEMES   Fake installed plugins
       --ver=VERSION     Wordpress version
+      --server=SERVER   Custom server header
 
 To configure the honeypot you can edit the config file `wordpot.conf` or provide arguments trough the command line interface as shown above.
 
